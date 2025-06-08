@@ -73,7 +73,6 @@ def generateResult(custom_points,node_points):
         Heur_model = H(h_points=h_points, coords=coords, router_range=ROUTER_RANGE*SCALE, max_routers=100, heuristics=heuristic)
         HEUR_RESULT = Heur_model.run()
         time_heur_temp =  time.time() - start_heur
-        # print(f"Heuristic time: {time_heur_temp} seconds")
         if HEUR_RESULT == None:
 
             return None,None,None,None,None
@@ -202,38 +201,25 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
         except:
             st.warning("Something went wrong with the generation of Analytics Graphs")
         
-
-        # plt.show()
-
-
         
 
 
 
 def discretize(h_points,NUM_PARTITIONS):    
-    # h_points = [[0,0],[0,1],[1,1],[1,0],[0.5,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5],[0.5,0.5],[0,0.98],[0.02,1],[0.04,1],[0,0.96]]
-
-    # h_points = h_points
     h_points = np.array(h_points)
-
-    # plt.plot(h_points[:,0], h_points[:,1], 'o')
-    # plt.show()
-
-    #Convex hull and its bounding box
     hull = ConvexHull(h_points)
 
-    # Bounding box of the convex hull
     min_x = min(h_points[:,0])
     min_y = min(h_points[:,1])
     max_x = max(h_points[:,0])
     max_y = max(h_points[:,1])
     bb = [(min_x,min_y), (min_x, max_y), (max_x, min_y), (max_x, max_y)]
     
-    nx, ny = (NUM_PARTITIONS, NUM_PARTITIONS) # number of horizontal and vertical grid lines
+    nx, ny = (NUM_PARTITIONS, NUM_PARTITIONS) 
 
     x = np.linspace(min_x, max_x, nx)
     y = np.linspace(min_y, max_y, ny)
-    g = np.meshgrid(x, y) #, sparse=True )
+    g = np.meshgrid(x, y) 
     coords = np.append(g[0].reshape(-1,1),g[1].reshape(-1,1),axis=1)
         
 
@@ -255,8 +241,6 @@ def discretize(h_points,NUM_PARTITIONS):
     return coords
 
 st.set_page_config(page_title="Router Estimation", layout="wide")
-
-# st_autorefresh(interval=50000000000000)
 
 
 
@@ -335,7 +319,6 @@ if show_canvas:
         if canvas_result.json_data is not None:
             objects = canvas_result.json_data["objects"]
             if objects:
-                # Normalize and flip Y-axis
                 node_points = [
                     (
                         round(obj["left"] / canvas_px * SCALE, 2),  # X stays the same
@@ -368,7 +351,6 @@ else:
 
 
 if generate:
-    # Cache results into session_state
     heur_results, all_heur, all_heur_times, h_points, heuristic_options = generateResult(custom_points,node_points)
 
     st.session_state.heur_results = heur_results
@@ -382,7 +364,6 @@ if generate:
     st.session_state.discretization = NUM_PARTITIONS
     
 
-# Try to use cached results from session_state
 try:
 
     if all(
@@ -400,9 +381,6 @@ try:
                 st.info(f"Scale : {st.session_state.scale} x {st.session_state.scale}")
             with col5:
                 st.info(f"Router Range : {st.session_state.router_range*st.session_state.scale} m")
-        
-        # st.scatter_chart(h_points,use_container_width=True)
-
   
             plotResults(
                 st.session_state.heur_results,
@@ -423,20 +401,7 @@ except Exception as e:
     with col2:
         st.info("Try increasing Number of Paritions for a valid result")
 
-    # st.error(str(e))  # Optional: to help you debug
-# dataPresent = False
-# if generate:
 
-    
-#     if heur_results != None:
-#         dataPresent = True
-#     else:
-#         dataPresent=False
-# try:
-#     with result:
-        
-# except:
-#     pass
     
 
 
