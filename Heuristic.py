@@ -79,11 +79,11 @@ class HeuristicRouterPlacement:
         for idx, _ in sorted_by_degree:
             temp_indices = active_indices - {idx}
             temp_G = G.subgraph(temp_indices)
-
-            if netx.is_connected(temp_G) and all_nodes_covered(temp_indices):
-                active_indices = temp_indices
-                # removed = True
-                # break  # Restart with updated set
+            if temp_G:
+                if netx.is_connected(temp_G) and all_nodes_covered(temp_indices):
+                    active_indices = temp_indices
+                    # removed = True
+                    # break  # Restart with updated set
 
         
 

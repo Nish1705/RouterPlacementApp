@@ -193,9 +193,9 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
     
     col1,col2 = st.columns(2)
     with col1:
-        st.bar_chart(all_heur)
+        st.bar_chart(all_heur,x_label='Heuristic Combination',y_label='Number of Routers',horizontal=True)
     with col2:
-        st.bar_chart(all_heur_times)
+        st.bar_chart(all_heur_times,x_label='Heuristic Combination',y_label='Time (μs)',horizontal=True)
 
     
 
@@ -317,33 +317,40 @@ show_canvas = st.checkbox("Add Custom Points")
 
 if show_canvas:
     canvas_px = 500
-    canvas_result = st_canvas(
-        fill_color="rgba(0, 0, 255, 0.3)",
-        stroke_width=5,
-        background_color="#ffffff",
-        height=canvas_px,
-        width=canvas_px,
-        drawing_mode="point",
-        key="canvas_bl",
-    )
+    col1,col2 = st.columns(2)
+    with col1:
+        canvas_result = st_canvas(
+            fill_color="rgba(0, 0, 255, 0.3)",
+            stroke_width=5,
+            background_color="#ffffff",
+            height=canvas_px,
+            width=canvas_px,
+            drawing_mode="point",
+            key="canvas_bl",
+        )
 
-    if canvas_result.json_data is not None:
-        objects = canvas_result.json_data["objects"]
-        if objects:
-            # Normalize and flip Y-axis
-            node_points = [
-                (
-                    round(obj["left"] / canvas_px * SCALE, 2),  # X stays the same
-                    round((canvas_px - obj["top"]) / canvas_px * SCALE, 2)  # Flip Y
-                )
-                for obj in objects if obj["type"] == "circle"
-            ]
-            
-            custom_points = True
+    with col2:
+
+        if canvas_result.json_data is not None:
+            objects = canvas_result.json_data["objects"]
+            if objects:
+                # Normalize and flip Y-axis
+                node_points = [
+                    (
+                        round(obj["left"] / canvas_px * SCALE, 2),  # X stays the same
+                        round((canvas_px - obj["top"]) / canvas_px * SCALE, 2)  # Flip Y
+                    )
+                    for obj in objects if obj["type"] == "circle"
+                ]
+                
+                custom_points = True
+                df_nodes = pd.DataFrame(node_points, columns=["x", "y"])
+                st.write(f"### 📍 Selected Locations (Scale: {SCALE}×{SCALE})")
+                st.dataframe(df_nodes)
+            else:
+                st.info("Click on the canvas to place nodes.")
         else:
-            st.info("Click on the canvas to place nodes.")
-    else:
-        st.info("Draw on the canvas to add points.")
+            st.info("Draw on the canvas to add points.")
 
 
 generate = st.button("Generate Plot",use_container_width=True)
@@ -393,19 +400,18 @@ try:
             with col5:
                 st.info(f"Router Range : {st.session_state.router_range*st.session_state.scale} m")
         
-        
         # st.scatter_chart(h_points,use_container_width=True)
 
   
-        plotResults(
-            st.session_state.heur_results,
-            st.session_state.all_heur,
-            st.session_state.all_heur_times,
-            st.session_state.h_points,
-            st.session_state.heuristic_options,
-            st.session_state.router_range,
-            st.session_state.scale
-        )
+            plotResults(
+                st.session_state.heur_results,
+                st.session_state.all_heur,
+                st.session_state.all_heur_times,
+                st.session_state.h_points,
+                st.session_state.heuristic_options,
+                st.session_state.router_range,
+                st.session_state.scale
+            )
 
 
     
