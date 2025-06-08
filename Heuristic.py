@@ -8,12 +8,8 @@ Limitations: Corner cases are not always satisfied due to limitation in discreti
 
 from scipy.spatial import KDTree
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.spatial import ConvexHull
-import sys
 import math 
 import networkx as netx
-from scipy.spatial import KDTree
 import random
 
 

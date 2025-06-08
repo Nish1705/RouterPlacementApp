@@ -1,17 +1,11 @@
 import streamlit as st
 import io
-import contextlib
-import pandas as pd
-import altair as alt
 import matplotlib.pyplot as plt
-from streamlit_autorefresh import st_autorefresh
-from streamlit_ace import st_ace
 import numpy as np
 from scipy.spatial import ConvexHull
 from Heuristic import HeuristicRouterPlacement as H
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import time
 
 def getAbreviation(key):
