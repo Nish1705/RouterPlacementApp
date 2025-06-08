@@ -7,6 +7,9 @@ from Heuristic import HeuristicRouterPlacement as H
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import pandas as pd
+from streamlit_drawable_canvas import st_canvas
+
 
 def getAbreviation(key):
     l = ['a' if key[0]else '','b'if key[1]else '','c' if key[2] else '', 'd' if key[3] else '']
@@ -23,7 +26,7 @@ def getAbreviation(key):
     return ans
 
     
-def generateResult():
+def generateResult(custom_points,node_points):
     global HEUR_RESULT
     heuristic_options = [
         [False,False,False,False],
@@ -44,12 +47,15 @@ def generateResult():
         [True,True,True,True]
     ]
 
-    rng = np.random.default_rng()
-    h_points = rng.random((N, 2))
-    h_points = np.array(h_points)
-
     
-    h_points = h_points*SCALE
+    if custom_points:
+        h_points = np.array(node_points)
+
+    else:
+        rng = np.random.default_rng()
+        h_points = rng.random((N, 2))
+        h_points = np.array(h_points)
+        h_points = h_points*SCALE
 
 
     coords = discretize(h_points,NUM_PARTITIONS)
@@ -257,10 +263,12 @@ global HEUR_RESULT
 HEUR_RESULT =None
 st.title("Minimum Router Estimation")
 
-with st.sidebar:
+
+sidebar = st.sidebar
+sidebar.title("About")
+with sidebar:
     if st.button("ℹ️ About"):
         st.session_state.show_about = not st.session_state.get("show_about", False)
-    
 
 if st.session_state.get("show_about"):
     st.sidebar.markdown("### 📡 Router Placement App")
@@ -302,16 +310,58 @@ with col4:
         "Choose Scale",
         (1,10,100,1000),accept_new_options=False
     )
+custom_points=False
+
+show_canvas = st.checkbox("Add Custom Points")
+
+
+if show_canvas:
+    canvas_px = 500
+    canvas_result = st_canvas(
+        fill_color="rgba(0, 0, 255, 0.3)",
+        stroke_width=5,
+        background_color="#ffffff",
+        height=canvas_px,
+        width=canvas_px,
+        drawing_mode="point",
+        key="canvas_bl",
+    )
+
+    if canvas_result.json_data is not None:
+        objects = canvas_result.json_data["objects"]
+        if objects:
+            # Normalize and flip Y-axis
+            node_points = [
+                (
+                    round(obj["left"] / canvas_px * SCALE, 2),  # X stays the same
+                    round((canvas_px - obj["top"]) / canvas_px * SCALE, 2)  # Flip Y
+                )
+                for obj in objects if obj["type"] == "circle"
+            ]
+            
+            custom_points = True
+        else:
+            st.info("Click on the canvas to place nodes.")
+    else:
+        st.info("Draw on the canvas to add points.")
 
 
 generate = st.button("Generate Plot",use_container_width=True)
 result = st.container()
 
+if custom_points:
+    node_points =  np.array(node_points)
+    print(node_points)
+    N = len(node_points)
+else:
+    node_points = None
+
+
 
 
 if generate:
     # Cache results into session_state
-    heur_results, all_heur, all_heur_times, h_points, heuristic_options = generateResult()
+    heur_results, all_heur, all_heur_times, h_points, heuristic_options = generateResult(custom_points,node_points)
 
     st.session_state.heur_results = heur_results
     st.session_state.all_heur = all_heur
