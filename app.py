@@ -121,6 +121,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 use_container_width=True
 
             )
+        
             
 
         with col2:
@@ -150,7 +151,6 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 mime=f"image/{filename_ext}",
                 use_container_width=True
             )
-            
 
         with col3:
             plt.figure(figsize=(3.3,2.7))
@@ -211,12 +211,15 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 use_container_width=True
 
             )
-    # === After plotting loop: create a ZIP of selected format ===
+        st.markdown("---")  
+        
+
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, "w") as zip_file:
         for filename, data in all_buffers:
             zip_file.writestr(filename, data)
     zip_buf.seek(0)
+
 
     # Download button
     st.download_button(
@@ -224,7 +227,8 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
         data=zip_buf,
         file_name=f"all_plots.{download_format.lower()}.zip",
         mime="application/zip",
-        use_container_width=True
+        use_container_width=True,
+        help=f'Download all the plots in {download_format} format as a ZIP file.'
     )
 
 
@@ -422,6 +426,7 @@ else:
 
 
 
+
 if generate:  
         with st.spinner("🌀 Calculating optimal router positions..."):
             heur_results, all_heur, all_heur_times, h_points, heuristic_options = generateResult(custom_points,node_points)
@@ -435,12 +440,13 @@ if generate:
             st.session_state.scale = SCALE
             st.session_state.N = N
             st.session_state.discretization = NUM_PARTITIONS
-            st.session_state.download_format = download_format
+            
             
             st.success("✔️ Computation Complete!")
 
 
 try:
+    st.session_state.download_format = download_format
 
     if all(
         key in st.session_state for key in [
@@ -448,7 +454,9 @@ try:
         ]
     ):
         with st.container(border=5):
-            col2,col3,col4,col5 = st.columns(4)
+            col1,col2,col3,col4,col5 = st.columns(5)
+            with col1:
+                st.info(f"Download Format : {st.session_state.download_format}")
             with col2:
                 st.info(f"Number of Points : {st.session_state.N}")
             with col3:
