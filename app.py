@@ -89,8 +89,8 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             plt.plot(h_points[:,0], h_points[:,1], 'o')
             for point in heur_results[i]:
-                plt.plot(point[0], point[1], 'gx')
-                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=False, linestyle='dotted')
+                plt.plot(point[0], point[1], 'X',color='black')
+                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
                 plt.gca().add_patch(circle)
             plt.tight_layout()
 
@@ -115,8 +115,8 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             plt.plot(h_points[:,0], h_points[:,1], 'o')
             for point in heur_results[i+1]:
-                plt.plot(point[0], point[1], 'gx')
-                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=False, linestyle='dotted')
+                plt.plot(point[0], point[1], 'X',color='black')
+                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
                 plt.gca().add_patch(circle)
             plt.tight_layout()
             buf = io.BytesIO()
@@ -139,8 +139,8 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             plt.plot(h_points[:,0], h_points[:,1], 'o')
             for point in heur_results[i+2]:
-                plt.plot(point[0], point[1], 'gx')
-                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=False, linestyle='dotted')
+                plt.plot(point[0], point[1], 'X',color='black')
+                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
                 plt.gca().add_patch(circle)
             plt.tight_layout()
             buf = io.BytesIO()
@@ -164,8 +164,8 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             plt.plot(h_points[:,0], h_points[:,1], 'o')
             for point in heur_results[i+3]:
-                plt.plot(point[0], point[1], 'gx')
-                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=False, linestyle='dotted')
+                plt.plot(point[0], point[1], 'X',color='black')
+                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
                 plt.gca().add_patch(circle)
             plt.tight_layout()
             buf = io.BytesIO()
@@ -255,7 +255,27 @@ st.set_page_config(page_title="Router Estimation", layout="wide")
 
 global HEUR_RESULT
 HEUR_RESULT =None
-st.title("🙌Minimum Router Estimation")
+st.title("Minimum Router Estimation")
+
+with st.sidebar:
+    if st.button("ℹ️ About"):
+        st.session_state.show_about = not st.session_state.get("show_about", False)
+    
+
+if st.session_state.get("show_about"):
+    st.sidebar.markdown("### 📡 Router Placement App")
+    st.sidebar.info("""
+    This tool helps optimize the placement of routers in a 2D space.
+
+    **Parameters:**
+    - Number of nodes
+    - Partitions
+    - Scale of space
+    - Router range
+
+    The app aims to achieve maximum coverage using heuristic placement strategies.
+    """)
+
 
 col1,col2,col3,col4 = st.columns(4)
 with col1:
