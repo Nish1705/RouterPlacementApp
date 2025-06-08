@@ -12,17 +12,18 @@ from streamlit_drawable_canvas import st_canvas
 
 
 def getAbreviation(key):
-    l = ['a' if key[0]else '','b'if key[1]else '','c' if key[2] else '', 'd' if key[3] else '']
+    l = ['A' if key[0]else '','B'if key[1]else '','C' if key[2] else '', 'D' if key[3] else '']
     x = ''.join(l)
     if len(x)==0:
-        ans  = "None"
+        ans  = "Greedy(G)"
     elif len(x)==1:
-        ans = f"Only {x}"
+        ans = f"Only G+{x}"
     else:
         ans = ''
         for i in x:
             ans += i + '+'
         ans = ans.strip('+')
+        ans = f"G+{ans}"
     return ans
 
     
@@ -106,7 +107,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
             
             st.pyplot(plt)
             st.download_button(
-                label=f"Download Plot {getAbreviation(tuple(heuristic_options[i]))}",
+                label=f"Download Plot: \"{getAbreviation(tuple(heuristic_options[i]))}\"",
                 data=buf,
                 file_name="plot.png",
                 mime="image/png",
@@ -131,7 +132,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             st.pyplot(plt)
             st.download_button(
-                label=f"Download Plot {getAbreviation(tuple(heuristic_options[i+1]))}",
+                label=f"Download Plot: \"{getAbreviation(tuple(heuristic_options[i+1]))}\"",
                 data=buf,
                 file_name="plot.png",
                 mime="image/png",
@@ -155,7 +156,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             st.pyplot(plt)
             st.download_button(
-                label=f"Download Plot {getAbreviation(tuple(heuristic_options[i+2]))}",
+                label=f"Download Plot: \"{getAbreviation(tuple(heuristic_options[i+2]))}\"",
                 data=buf,
                 file_name="plot.png",
                 mime="image/png",
@@ -180,7 +181,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             st.pyplot(plt)
             st.download_button(
-                label=f"Download Plot {getAbreviation(tuple(heuristic_options[i+3]))}",
+                label=f"Download Plot: \"{getAbreviation(tuple(heuristic_options[i+3]))}\"",
                 data=buf,
                 file_name="plot.png",
                 mime="image/png",
@@ -189,22 +190,22 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
             )
         
     
+    with  st.container(border=1):
+        st.subheader("Analytics",help="Time and Result Comparison for each Heuristic Combination")
+        try:
             
-    
-    col1,col2 = st.columns(2)
-    with col1:
-        st.bar_chart(all_heur,x_label='Heuristic Combination',y_label='Number of Routers',horizontal=True)
-    with col2:
-        st.bar_chart(all_heur_times,x_label='Heuristic Combination',y_label='Time (μs)',horizontal=True)
-
-    
+            col1,col2 = st.columns(2)
+            with col1:
+                st.bar_chart(all_heur,x_label='Heuristic Combination',y_label='Number of Routers',horizontal=True)
+            with col2:
+                st.bar_chart(all_heur_times,x_label='Heuristic Combination',y_label='Time (μs)',horizontal=True)
+        except:
+            st.warning("Something went wrong with the generation of Analytics Graphs")
+        
 
         # plt.show()
 
 
-
-
-        
         
 
 
