@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import time
 import pandas as pd
 from streamlit_drawable_canvas import st_canvas
+import zipfile
+
 
 
 def getAbreviation(key):
@@ -84,8 +86,9 @@ def generateResult(custom_points,node_points):
 
     return heur_results,all_heur,all_heur_times,h_points,heuristic_options
 
-def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,router_range,scale):
-    
+def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,router_range,scale,download_format):
+
+    all_buffers = []
     for i in range(0,16,4):
 
         col1,col2,col3,col4 = st.columns(4)
@@ -101,15 +104,20 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
             plt.tight_layout()
 
             buf = io.BytesIO()
-            plt.savefig(buf, format='png')
+            save_format = 'png' if download_format == 'PNG' else 'pdf'
+            plt.savefig(buf, format=save_format)
             buf.seek(0)
+            filename_ext = save_format
+
+            all_buffers.append((f"plot_{getAbreviation(tuple(heuristic_options[i]))}.{filename_ext}", buf.getvalue()))
+
             
             st.pyplot(plt)
             st.download_button(
                 label=f"Download Plot: \"{getAbreviation(tuple(heuristic_options[i]))}\"",
                 data=buf,
-                file_name="plot.png",
-                mime="image/png",
+                file_name=f"plot_{getAbreviation(tuple(heuristic_options[i]))}.{save_format}",
+                mime=f"image/{filename_ext}",
                 use_container_width=True
 
             )
@@ -125,16 +133,21 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
                 plt.gca().add_patch(circle)
             plt.tight_layout()
+
             buf = io.BytesIO()
-            plt.savefig(buf, format='png')
+            save_format = 'png' if download_format == 'PNG' else 'pdf'
+            plt.savefig(buf, format=save_format)
             buf.seek(0)
+            filename_ext = save_format
+
+            all_buffers.append((f"plot_{getAbreviation(tuple(heuristic_options[i+1]))}.{filename_ext}", buf.getvalue()))
 
             st.pyplot(plt)
             st.download_button(
                 label=f"Download Plot: \"{getAbreviation(tuple(heuristic_options[i+1]))}\"",
                 data=buf,
-                file_name="plot.png",
-                mime="image/png",
+                file_name=f"plot_{getAbreviation(tuple(heuristic_options[i+1]))}.{filename_ext}",
+                mime=f"image/{filename_ext}",
                 use_container_width=True
             )
             
@@ -149,16 +162,22 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
                 plt.gca().add_patch(circle)
             plt.tight_layout()
+
             buf = io.BytesIO()
-            plt.savefig(buf, format='png')
+            save_format = 'png' if download_format == 'PNG' else 'pdf'
+            plt.savefig(buf, format=save_format)
             buf.seek(0)
+            filename_ext = save_format
+
+
+            all_buffers.append((f"plot_{getAbreviation(tuple(heuristic_options[i+2]))}.{filename_ext}", buf.getvalue()))
 
             st.pyplot(plt)
             st.download_button(
                 label=f"Download Plot: \"{getAbreviation(tuple(heuristic_options[i+2]))}\"",
                 data=buf,
-                file_name="plot.png",
-                mime="image/png",
+                file_name=f"plot_{getAbreviation(tuple(heuristic_options[i+2]))}.{filename_ext}",
+                mime=f"image/{filename_ext}",
                 use_container_width=True
 
             )
@@ -174,19 +193,41 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
                 plt.gca().add_patch(circle)
             plt.tight_layout()
+
             buf = io.BytesIO()
-            plt.savefig(buf, format='png')
+            save_format = 'png' if download_format == 'PNG' else 'pdf'
+            plt.savefig(buf, format=save_format)
             buf.seek(0)
+            filename_ext = save_format
+
+            all_buffers.append((f"plot_{getAbreviation(tuple(heuristic_options[i+3]))}.{filename_ext}", buf.getvalue()))
 
             st.pyplot(plt)
             st.download_button(
                 label=f"Download Plot: \"{getAbreviation(tuple(heuristic_options[i+3]))}\"",
                 data=buf,
-                file_name="plot.png",
-                mime="image/png",
+                file_name=f"plot_{getAbreviation(tuple(heuristic_options[i+3]))}.{filename_ext}",
+                mime=f"image/{filename_ext}",
                 use_container_width=True
 
             )
+    # === After plotting loop: create a ZIP of selected format ===
+    zip_buf = io.BytesIO()
+    with zipfile.ZipFile(zip_buf, "w") as zip_file:
+        for filename, data in all_buffers:
+            zip_file.writestr(filename, data)
+    zip_buf.seek(0)
+
+    # Download button
+    st.download_button(
+        label=f"📦 Download All Plots as {download_format} (ZIP)",
+        data=zip_buf,
+        file_name=f"all_plots.{download_format.lower()}.zip",
+        mime="application/zip",
+        use_container_width=True
+    )
+
+
         
     
     with  st.container(border=1):
@@ -270,7 +311,7 @@ if st.session_state.get("show_about"):
     """)
 
 
-col1,col2,col3,col4 = st.columns(4)
+col1,col2,col3,col4,col5 = st.columns(5)
 with col1:
     ROUTER_RANGE = st.selectbox(
         "Choose a router range",
@@ -295,53 +336,84 @@ with col4:
         "Choose Scale",
         (1,10,100,1000),accept_new_options=False
     )
+with col5:
+    download_format = st.radio("Choose download format for all plots:", ["PNG", "PDF"], horizontal=True)
+
 custom_points=False
 
-show_canvas = st.checkbox("Add Custom Points")
-
-
-if show_canvas:
-    canvas_px = 500
-    col1,col2 = st.columns(2)
-    with col1:
-        canvas_result = st_canvas(
-            fill_color="rgba(0, 0, 255, 0.3)",
-            stroke_width=5,
-            background_color="#ffffff",
-            height=canvas_px,
-            width=canvas_px,
-            drawing_mode="point",
-            key="canvas_bl",
+method_container = st.container(border=2)
+with method_container:
+    show_canvas = st.checkbox("Add Custom Points")
+    if show_canvas:
+        
+        method = st.selectbox(
+            "Choose a method to add custom points",
+            ("Create on Canvas", "Upload CSV"),accept_new_options=False  #TODO Adding "Manual" option
         )
+        if method == "Create on Canvas":
+            canvas_px = 500
+            col1,col2 = st.columns(2)
+            with col1:
+                canvas_result = st_canvas(
+                    fill_color="rgba(0, 0, 255, 0.3)",
+                    stroke_width=5,
+                    background_color="#ffffff",
+                    height=canvas_px,
+                    width=canvas_px,
+                    drawing_mode="point",
+                    key="canvas_bl",
+                )
 
-    with col2:
+            with col2:
 
-        if canvas_result.json_data is not None:
-            objects = canvas_result.json_data["objects"]
-            if objects:
-                node_points = [
-                    (
-                        round(obj["left"] / canvas_px * SCALE, 2),  # X stays the same
-                        round((canvas_px - obj["top"]) / canvas_px * SCALE, 2)  # Flip Y
-                    )
-                    for obj in objects if obj["type"] == "circle"
-                ]
-                
-                custom_points = True
-                df_nodes = pd.DataFrame(node_points, columns=["x", "y"])
-                st.write(f"### 📍 Selected Locations (Scale: {SCALE}×{SCALE})")
-                st.dataframe(df_nodes)
-            else:
-                st.info("Click on the canvas to place nodes.")
+                if canvas_result.json_data is not None:
+                    objects = canvas_result.json_data["objects"]
+                    if objects:
+                        temp_points = [
+                            (
+                                round(obj["left"] / canvas_px * SCALE, 2),  # X stays the same
+                                round((canvas_px - obj["top"]) / canvas_px *SCALE, 2)  # Flip Y
+                            )
+                            for obj in objects if obj["type"] == "circle"
+                        ]
+                        node_points = [
+                            (
+                                round(obj["left"] / canvas_px , 2),  # X stays the same
+                                round((canvas_px - obj["top"]) / canvas_px , 2)  # Flip Y
+                            )
+                            for obj in objects if obj["type"] == "circle"
+                        ]
+                        
+                        custom_points = True
+                        df_nodes = pd.DataFrame(temp_points, columns=["x", "y"])
+                        st.write(f"### 📍 Selected Locations (Scale: {SCALE}×{SCALE})")
+                        st.dataframe(df_nodes)
+                    else:
+                        st.info("Click on the canvas to place nodes.")
+                else:
+                    st.info("Draw on the canvas to add points.")
+        elif method == "Upload CSV":
+            try:
+                uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
+                if uploaded_file is not None:
+                    df = pd.read_csv(uploaded_file)
+                    df_nodes = df[['x', 'y']]
+                    node_points = df_nodes.values.tolist()
+                    custom_points = True
+                    st.dataframe(df)
+                    st.success("Node Points uploaded successfully!")
+            except:
+                st.error("CSV MUST Contain columns x and y.")
         else:
-            st.info("Draw on the canvas to add points.")
+            pass
 
+# result = st.container(border=1)
 
 generate = st.button("Generate Plot",use_container_width=True)
-result = st.container()
+
 
 if custom_points:
-    node_points =  np.array(node_points)
+    node_points =  np.array(node_points)*SCALE
     print(node_points)
     N = len(node_points)
 else:
@@ -350,25 +422,29 @@ else:
 
 
 
-if generate:
-    heur_results, all_heur, all_heur_times, h_points, heuristic_options = generateResult(custom_points,node_points)
+if generate:  
+        with st.spinner("🌀 Calculating optimal router positions..."):
+            heur_results, all_heur, all_heur_times, h_points, heuristic_options = generateResult(custom_points,node_points)
 
-    st.session_state.heur_results = heur_results
-    st.session_state.all_heur = all_heur
-    st.session_state.all_heur_times = all_heur_times
-    st.session_state.h_points = h_points
-    st.session_state.heuristic_options = heuristic_options
-    st.session_state.router_range = ROUTER_RANGE
-    st.session_state.scale = SCALE
-    st.session_state.N = N
-    st.session_state.discretization = NUM_PARTITIONS
-    
+            st.session_state.heur_results = heur_results
+            st.session_state.all_heur = all_heur
+            st.session_state.all_heur_times = all_heur_times
+            st.session_state.h_points = h_points
+            st.session_state.heuristic_options = heuristic_options
+            st.session_state.router_range = ROUTER_RANGE
+            st.session_state.scale = SCALE
+            st.session_state.N = N
+            st.session_state.discretization = NUM_PARTITIONS
+            st.session_state.download_format = download_format
+            
+            st.success("✔️ Computation Complete!")
+
 
 try:
 
     if all(
         key in st.session_state for key in [
-            "heur_results", "all_heur", "all_heur_times", "h_points", "heuristic_options",'router_range','scale','N','discretization'
+            "heur_results", "all_heur", "all_heur_times", "h_points", "heuristic_options",'router_range','scale','N','discretization','download_format'
         ]
     ):
         with st.container(border=5):
@@ -378,7 +454,7 @@ try:
             with col3:
                 st.info(f"Discretization : {st.session_state.discretization}")
             with col4:
-                st.info(f"Scale : {st.session_state.scale} x {st.session_state.scale}")
+                st.info(f"Area : {st.session_state.scale} m × {st.session_state.scale} m")
             with col5:
                 st.info(f"Router Range : {st.session_state.router_range*st.session_state.scale} m")
   
@@ -389,7 +465,8 @@ try:
                 st.session_state.h_points,
                 st.session_state.heuristic_options,
                 st.session_state.router_range,
-                st.session_state.scale
+                st.session_state.scale,
+                st.session_state.download_format
             )
 
 
@@ -400,6 +477,8 @@ except Exception as e:
         st.info("No Valid Result")
     with col2:
         st.info("Try increasing Number of Paritions for a valid result")
+    st.error(e)
+
 
 
     
