@@ -418,7 +418,6 @@ generate = st.button("Generate Plot",use_container_width=True)
 
 if custom_points:
     node_points =  np.array(node_points)*SCALE
-    print(node_points)
     N = len(node_points)
 else:
     node_points = None
