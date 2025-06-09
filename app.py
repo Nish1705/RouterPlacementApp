@@ -10,7 +10,7 @@ import time
 import pandas as pd
 from streamlit_drawable_canvas import st_canvas
 import zipfile
-
+from PIL import Image
 
 
 def getAbreviation(key):
@@ -61,11 +61,66 @@ def generateResult(custom_points,node_points):
         h_points = h_points*SCALE
 
 
-    coords = discretize(h_points,NUM_PARTITIONS)
-    plt.clf()
+    coords,hull = discretize(h_points,NUM_PARTITIONS)
+
+    initial_plots = []
+
+
+
+    plt.figure(figsize=(3.3,2.7))
+
+    plt.plot(h_points[:,0], h_points[:,1], 'bo')
+
+    plt.tight_layout()
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+
+    initial_plots.append(buf.getvalue())
+
+    plt.close()
+
+    if hull is not None:
+
+        plt.figure(figsize=(3.3,2.7))
+        plt.plot(h_points[:,0], h_points[:,1], 'bo',label='Regular Nodes')
+        for simplex in hull.simplices:
+            plt.plot(h_points[simplex, 0], h_points[simplex, 1], 'k-')
+        for p in coords:
+            marker = '.' 
+            color = 'g'
+            plt.scatter(p[0], p[1], marker=marker, color=color,label="Grid Points" if p[0] == coords[0][0] and p[1] == coords[0][1] else "")
+        plt.tight_layout()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+
+        initial_plots.append(buf.getvalue())
+
+        plt.close()
+    else:
+        plt.figure(figsize=(3.3,2.7))
+        plt.plot(h_points[:,0], h_points[:,1], 'bo',label='Regular Nodes')
+
+        for p in coords:
+            marker = '.' 
+            color = 'g'
+            plt.scatter(p[0], p[1], marker=marker, color=color,label="Grid Points" if p[0] == coords[0][0] and p[1] == coords[0][1] else "")
+        plt.tight_layout()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+
+        initial_plots.append(buf.getvalue())
+
+        plt.close()
+
+
+
     all_heur={}
     all_heur_times={}
     heur_results = []
+    intermediates = {}
 
     for i,heuristic in enumerate(heuristic_options):
 
@@ -73,18 +128,56 @@ def generateResult(custom_points,node_points):
 
         start_heur = time.time()
         Heur_model = H(h_points=h_points, coords=coords, router_range=ROUTER_RANGE*SCALE, max_routers=100, heuristics=heuristic)
-        HEUR_RESULT = Heur_model.run()
+        HEUR_RESULT,inter = Heur_model.run()
+        
+        
         time_heur_temp =  time.time() - start_heur
-        if HEUR_RESULT == None:
 
-            return None,None,None,None,None
+        if HEUR_RESULT ==None:
+            return None,None,None,None,None,None
         else:
             all_heur[getAbreviation(tuple(heuristic))]=len(HEUR_RESULT)
             all_heur_times[getAbreviation(tuple(heuristic))]=time_heur_temp*1000000
+            intermediates[getAbreviation(tuple(heuristic))] = [initial_plots[0],initial_plots[1],*inter]
             heur_results.append(tuple(HEUR_RESULT))
 
+    return heur_results,all_heur,all_heur_times,h_points,heuristic_options,intermediates
+                  
+def plotIntermediates(inter,download_format,heuristic_options):
+    save_format = 'png' if download_format == 'PNG' else 'pdf'
+    # print(len(inter))
 
-    return heur_results,all_heur,all_heur_times,h_points,heuristic_options
+    with st.expander("Show Intermediates"):
+        st.markdown('## Intermediates')
+
+
+        tab_keys = list(inter.keys())
+        tabs = st.tabs(tab_keys)
+
+        for tab_idx, tab in enumerate(tabs):
+            key = tab_keys[tab_idx]
+            buffers = inter[key]
+
+            with tab:
+                # st.info(f"Intermediate Steps for: **{key}**")
+
+                # Group buffers into chunks of 4 for rows
+                for i in range(0, len(buffers), 4):
+                    cols = st.columns(4)
+                    for j in range(4):
+                        if i + j < len(buffers):
+                            with cols[j]:
+                                img = Image.open(io.BytesIO(buffers[i + j]))
+                                st.image(img, use_container_width=True)
+                                st.download_button(
+                                label=f"Download Plot: \"{key}_{i+j}\"",
+                                data=buffers[i + j],
+                                file_name=f"plot_{key}_{i+j}.{save_format}",
+                                mime=f"image/{save_format}",
+                                use_container_width=True
+
+                            )
+
 
 def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,router_range,scale,download_format):
 
@@ -250,7 +343,18 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
 
 
-def discretize(h_points,NUM_PARTITIONS):    
+def discretize(h_points,NUM_PARTITIONS): 
+    if len(h_points)<2:
+        return None,None
+    if len(h_points) == 2:
+        x1, y1 = h_points[0]
+        x2, y2 = h_points[1]
+
+        t_values = np.linspace(0, 1, NUM_PARTITIONS + 1).reshape(-1, 1)
+        coords = (1 - t_values) * h_points[0] + t_values * h_points[1]
+
+        return coords,None
+
     h_points = np.array(h_points)
     hull = ConvexHull(h_points)
 
@@ -283,7 +387,10 @@ def discretize(h_points,NUM_PARTITIONS):
     coords = np.delete(coords, to_del, 0)
 
     
-    return coords
+
+
+    
+    return coords,hull
 
 st.set_page_config(page_title="Router Estimation", layout="wide")
 
@@ -428,20 +535,36 @@ else:
 
 if generate:  
         with st.spinner("🌀 Calculating optimal router positions..."):
-            heur_results, all_heur, all_heur_times, h_points, heuristic_options = generateResult(custom_points,node_points)
+            heur_results, all_heur, all_heur_times, h_points, heuristic_options, inter = generateResult(custom_points,node_points)
+            if heur_results is not None:
+                st.session_state.heur_results = heur_results
+                st.session_state.all_heur = all_heur
+                st.session_state.all_heur_times = all_heur_times
+                st.session_state.h_points = h_points
+                st.session_state.heuristic_options = heuristic_options
+                st.session_state.router_range = ROUTER_RANGE
+                st.session_state.scale = SCALE
+                st.session_state.N = N
+                st.session_state.discretization = NUM_PARTITIONS
+                st.session_state.intermediates = inter
+        
+                st.success("✔️ Computation Complete!")
+            else:
+                try:
+                    del st.session_state.heur_results
+                    del st.session_state.all_heur
+                    del st.session_state.all_heur_times
+                    del st.session_state.h_points
+                    del st.session_state.heuristic_options
+                    del st.session_state.router_range
+                    del st.session_state.scale
+                    del st.session_state.N
+                    del st.session_state.discretization
+                    del st.session_state.intermediates
+                except:
+                    pass
+                st.warning("⚠️ No Valid Result")
 
-            st.session_state.heur_results = heur_results
-            st.session_state.all_heur = all_heur
-            st.session_state.all_heur_times = all_heur_times
-            st.session_state.h_points = h_points
-            st.session_state.heuristic_options = heuristic_options
-            st.session_state.router_range = ROUTER_RANGE
-            st.session_state.scale = SCALE
-            st.session_state.N = N
-            st.session_state.discretization = NUM_PARTITIONS
-            
-            
-            st.success("✔️ Computation Complete!")
 
 
 try:
@@ -449,10 +572,10 @@ try:
 
     if all(
         key in st.session_state for key in [
-            "heur_results", "all_heur", "all_heur_times", "h_points", "heuristic_options",'router_range','scale','N','discretization','download_format'
+            "heur_results", "all_heur", "all_heur_times", "h_points", "heuristic_options",'router_range','scale','N','discretization','download_format','intermediates'
         ]
     ):
-        with st.container(border=5):
+        with st.container(border=1):
             col1,col2,col3,col4,col5 = st.columns(5)
             with col1:
                 st.info(f"Download Format : {st.session_state.download_format}")
@@ -464,7 +587,23 @@ try:
                 st.info(f"Area : {st.session_state.scale} m × {st.session_state.scale} m")
             with col5:
                 st.info(f"Router Range : {st.session_state.router_range*st.session_state.scale} m")
-  
+            if st.session_state.intermediates is not None:
+                try:
+                    pltIntermediates(
+                        # st.session_state.heur_results,
+                        # st.session_state.all_heur,
+                        # st.session_state.all_heur_times,
+                        # st.session_state.h_points,
+                        # st.session_state.router_range,
+                        # st.session_state.scale,
+                        st.session_state.intermediates,
+                        st.session_state.download_format,
+                        st.session_state.heuristic_options
+                    )
+                except:
+                    st.warning("⚠️ Error Occured While Generating Intermediates")
+            st.markdown("---")
+            st.markdown("## Results")
             plotResults(
                 st.session_state.heur_results,
                 st.session_state.all_heur,
@@ -475,6 +614,8 @@ try:
                 st.session_state.scale,
                 st.session_state.download_format
             )
+
+            
 
 
     
