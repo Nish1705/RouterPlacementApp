@@ -589,7 +589,7 @@ try:
                 st.info(f"Router Range : {st.session_state.router_range*st.session_state.scale} m")
             if st.session_state.intermediates is not None:
                 try:
-                    pltIntermediates(
+                    plotIntermediates(
                         # st.session_state.heur_results,
                         # st.session_state.all_heur,
                         # st.session_state.all_heur_times,
