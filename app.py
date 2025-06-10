@@ -106,10 +106,13 @@ def generateResult(custom_points,node_points):
         plt.plot(h_points[:,0], h_points[:,1], 'bo',label='Regular Nodes')
         for simplex in hull.simplices:
             plt.plot(h_points[simplex, 0], h_points[simplex, 1], 'k-')
-        for p in coords:
-            marker = '.' 
-            color = 'g'
-            plt.scatter(p[0], p[1], marker=marker, color=color,label="Grid Points" if p[0] == coords[0][0] and p[1] == coords[0][1] else "")
+        
+        # for p in coords:
+        #     print(p)
+        #     marker = '.' 
+        #     color = 'g'
+            # plt.scatter(p[0], p[1], marker=marker, color=color,label="Grid Points" if p[0] == coords[0][0] and p[1] == coords[0][1] else "")
+        plt.plot(h_points[:,0], h_points[:,1], 'bo',label='Grid Points',marker='o',color='green')
         plt.tight_layout()
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
@@ -434,10 +437,10 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
             with col1:
                 try:
                     plt.figure(figsize=(10,6))             
-                    initPlotParams(ylabel = 'Heuristic',xlabel='Minimized Number of Routers')
-                    bars = plt.barh(list(all_heur.keys()),all_heur.values(),color='crimson')
+                    initPlotParams(ylabel = 'Heuristic',xlabel='Competitive Ratio')
+                    bars = plt.barh(list(all_heur.keys()),np.array(list(all_heur.values()))/min(all_heur.values()),color='crimson')
                     for bar in bars:
-                        plt.text(bar.get_width()+0.1,
+                        plt.text(bar.get_width()+0.01,
                                   bar.get_y()+bar.get_height()/2,
                                   "{}".format(bar.get_width()),
                                   va='center',
@@ -463,9 +466,9 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                             )
 
                     # st.bar_chart(all_heur,x_label='Heuristic Combination',y_label='Number of Routers',horizontal=True)
-                except:
+                except Exception as e:
                     st.warning(body="Something went wrong with the generation of Result Analytics Graphs",icon="⚠️")
-
+                    st.error(f"Error : {e}")
             with col2:
                 try:
                 
