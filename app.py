@@ -13,6 +13,27 @@ import zipfile
 from PIL import Image
 
 
+FIG_SIZE = (3.3,2.7)
+
+def initPlotParams(title=None, xlabel=None, ylabel=None, color='skyblue', edgecolor='black', alpha=1.0, grid=False,equal=False):
+    plt.clf()
+    plt.rcParams.update({'font.size': 14})
+    plt.rcParams["font.family"] = "sans-serif" # Set default to serif
+    plt.rcParams["font.sans-serif"] = ["Helvetica", "Arial", "DejaVu Sans"] # Set fallback fonts for sans-serif
+    # plt.figure(figsize=(3.3,2.7)) # Width and height in inches
+    if equal:
+        plt.axis('equal')
+
+
+    if xlabel is not None:
+        plt.xlabel(xlabel)
+    if ylabel is not None:
+        plt.ylabel(ylabel)
+    if title is not None:
+        plt.title(title)
+    plt.grid(grid)
+
+
 def getAbreviation(key):
     l = ['A' if key[0]else '','B'if key[1]else '','C' if key[2] else '', 'D' if key[3] else '']
     x = ''.join(l)
@@ -66,23 +87,22 @@ def generateResult(custom_points,node_points):
     initial_plots = []
 
 
-
-    plt.figure(figsize=(3.3,2.7))
-
+    plt.figure(figsize=FIG_SIZE)
+    initPlotParams(equal=True)
+    
     plt.plot(h_points[:,0], h_points[:,1], 'bo')
 
     plt.tight_layout()
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
-
     initial_plots.append(buf.getvalue())
-
     plt.close()
 
     if hull is not None:
+        plt.figure(figsize=FIG_SIZE)
+        initPlotParams(equal=True)
 
-        plt.figure(figsize=(3.3,2.7))
         plt.plot(h_points[:,0], h_points[:,1], 'bo',label='Regular Nodes')
         for simplex in hull.simplices:
             plt.plot(h_points[simplex, 0], h_points[simplex, 1], 'k-')
@@ -99,7 +119,9 @@ def generateResult(custom_points,node_points):
 
         plt.close()
     else:
-        plt.figure(figsize=(3.3,2.7))
+        plt.figure(figsize=FIG_SIZE)
+        initPlotParams(equal=True)
+
         plt.plot(h_points[:,0], h_points[:,1], 'bo',label='Regular Nodes')
 
         for p in coords:
@@ -110,9 +132,7 @@ def generateResult(custom_points,node_points):
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
         buf.seek(0)
-
         initial_plots.append(buf.getvalue())
-
         plt.close()
 
 
@@ -186,8 +206,10 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
         col1,col2,col3,col4 = st.columns(4)
         with col1:
-            plt.figure(figsize=(3.3,2.7))
-            plt.title(f"{getAbreviation(tuple(heuristic_options[i]))} : {len(heur_results[i])}")
+            plt.figure(figsize=FIG_SIZE)
+            initPlotParams(equal=True)
+
+            # plt.title(f"{getAbreviation(tuple(heuristic_options[i]))} : {len(heur_results[i])}")
 
             plt.plot(h_points[:,0], h_points[:,1], 'o')
             for point in heur_results[i]:
@@ -218,8 +240,11 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
             
 
         with col2:
-            plt.figure(figsize=(3.3,2.7))
-            plt.title(f"{getAbreviation(tuple(heuristic_options[i+1]))} : {len(heur_results[i+1])}")
+            plt.figure(figsize=FIG_SIZE)
+            initPlotParams(equal=True)
+
+
+            # plt.title(f"{getAbreviation(tuple(heuristic_options[i+1]))} : {len(heur_results[i+1])}")
 
             plt.plot(h_points[:,0], h_points[:,1], 'o')
             for point in heur_results[i+1]:
@@ -246,8 +271,11 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
             )
 
         with col3:
-            plt.figure(figsize=(3.3,2.7))
-            plt.title(f"{getAbreviation(tuple(heuristic_options[i+2]))} : {len(heur_results[i+2])}")
+            plt.figure(figsize=FIG_SIZE)
+            initPlotParams(equal=True)
+            
+
+            # plt.title(f"{getAbreviation(tuple(heuristic_options[i+2]))} : {len(heur_results[i+2])}")
 
             plt.plot(h_points[:,0], h_points[:,1], 'o')
             for point in heur_results[i+2]:
@@ -277,8 +305,10 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
             
             
         with col4:
-            plt.figure(figsize=(3.3,2.7))
-            plt.title(f"{getAbreviation(tuple(heuristic_options[i+3]))} : {len(heur_results[i+3])}")
+            
+            plt.figure(figsize=FIG_SIZE)
+            initPlotParams(equal=True)
+            # plt.title(f"{getAbreviation(tuple(heuristic_options[i+3]))} : {len(heur_results[i+3])}")
 
             plt.plot(h_points[:,0], h_points[:,1], 'o')
             for point in heur_results[i+3]:
@@ -330,14 +360,83 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
     with  st.container(border=1):
         st.subheader("Analytics",help="Time and Result Comparison for each Heuristic Combination")
         try:
-            
+
             col1,col2 = st.columns(2)
+
             with col1:
-                st.bar_chart(all_heur,x_label='Heuristic Combination',y_label='Number of Routers',horizontal=True)
+                try:
+                    plt.figure(figsize=(10,6))             
+                    initPlotParams(ylabel = 'Heuristic',xlabel='Minimized Number of Routers')
+                    bars = plt.barh(list(all_heur.keys()),all_heur.values(),color='crimson')
+                    for bar in bars:
+                        plt.text(bar.get_width()+0.1,
+                                  bar.get_y()+bar.get_height()/2,
+                                  "{}".format(bar.get_width()),
+                                  va='center',
+                                  ha='left'
+                                  )
+                    plt.tight_layout()
+                    st.pyplot(plt)
+                    
+                    buf = io.BytesIO()
+                    plt.savefig(buf, format='png', bbox_inches='tight')
+                    buf.seek(0)
+                    plt.close()
+
+
+
+                    st.download_button(
+                                label=f"Download Result Analytics Graphs",
+                                data=buf,
+                                file_name=f"Result_Analytics.{save_format}",
+                                mime=f"image/{save_format}",
+                                use_container_width=True
+
+                            )
+
+                    # st.bar_chart(all_heur,x_label='Heuristic Combination',y_label='Number of Routers',horizontal=True)
+                except:
+                    st.warning(body="Something went wrong with the generation of Result Analytics Graphs",icon="⚠️")
+
             with col2:
-                st.bar_chart(all_heur_times,x_label='Heuristic Combination',y_label='Time (μs)',horizontal=True)
-        except:
+                try:
+                
+                    plt.figure(figsize=(10,6))  
+                    initPlotParams(ylabel = 'Heuristic',xlabel='Time (in microseconds)')
+                    bars = plt.barh(list(all_heur_times.keys()),all_heur_times.values(),color='navy')
+                    for bar in bars:
+                        plt.text(bar.get_width()//2,
+                                  bar.get_y()+bar.get_height()/2,
+                                  "{}".format(bar.get_width().round(2)),
+                                  va='center',
+                                  ha='center',
+                                  color='white'
+                                  )
+                    plt.tight_layout()
+                    st.pyplot(plt)
+
+                    buf = io.BytesIO()
+                    plt.savefig(buf, format='png', bbox_inches='tight')
+                    buf.seek(0)
+                    plt.close()
+
+
+
+                    st.download_button(
+                                label=f"Download Time Analytics Graphs",
+                                data=buf,
+                                file_name=f"Time_Analytics.{save_format}",
+                                mime=f"image/{save_format}",
+                                use_container_width=True
+
+                            )
+                except:
+                    st.warning(body="Something went wrong with the generation of Time Analytics Graphs",icon="⚠️")
+
+        except Exception as e:
             st.warning("Something went wrong with the generation of Analytics Graphs")
+            st.error(e)
+            print(e)
         
         
 
@@ -424,31 +523,43 @@ if st.session_state.get("show_about"):
 
 col1,col2,col3,col4,col5 = st.columns(5)
 with col1:
-    ROUTER_RANGE = st.selectbox(
+    range_perc = st.selectbox(
         "Choose a router range",
-        (0.1, 0.2, 0.3, 0.4, 0.5),accept_new_options=False
+        (10, 20, 30, 40, 50),accept_new_options=False,
+        help="Calculated as x\% of SCALE (in meters)"
     )
+    ROUTER_RANGE = range_perc/100
 
 with col2:
-    N = st.selectbox(
-        "Choose Number of Points",
-        (5,10,15,20,25,30),accept_new_options=False
-    )
+    # N = st.selectbox(
+    #     "Choose Number of Points",
+    #     (5,10,15,20,25,30),accept_new_options=False
+    # )
+    N = st.number_input(label="Number of Nodes",
+                        min_value=2,
+                        help="Define the Number of Nodes you need to place on the field.\
+                              These nodes are randomly generated."
+                        )
 
 
 with col3:
 
     NUM_PARTITIONS = st.selectbox(
         "Choose number of Partitions",
-        (5,11,15,21,25,31,35,41,45,51),accept_new_options=False
+        (5,11,15,21,25,31,35,41,45,51,55,61,65,71,75,81,85,91,95,101),accept_new_options=False
     )
 with col4:
     SCALE = st.selectbox(
         "Choose Scale",
-        (1,10,100,1000),accept_new_options=False
+        (1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,200,300,400,500,600,700,800,900,1000),
+        help="This will define the area of the field.\n {Field will be scale x scale}"
     )
+        
 with col5:
-    download_format = st.radio("Choose download format for all plots:", ["PNG", "PDF"], horizontal=True)
+    download_format = st.radio("Plot Download Format:", ["PNG", "PDF"], 
+                               horizontal=True,
+                               help="Mention the Format of the plots"
+                               )
 
 custom_points=False
 
@@ -482,8 +593,8 @@ with method_container:
                     if objects:
                         temp_points = [
                             (
-                                round(obj["left"] / canvas_px * SCALE, 2),  # X stays the same
-                                round((canvas_px - obj["top"]) / canvas_px *SCALE, 2)  # Flip Y
+                                max(round(obj["left"] / canvas_px * SCALE, 2),0),  # X stays the same
+                                max(0,round((canvas_px - obj["top"]) / canvas_px *SCALE, 2))  # Flip Y
                             )
                             for obj in objects if obj["type"] == "circle"
                         ]
@@ -523,17 +634,29 @@ with method_container:
 generate = st.button("Generate Plot",use_container_width=True)
 
 
-if custom_points:
-    node_points =  np.array(node_points)*SCALE
-    N = len(node_points)
-else:
-    node_points = None
+
 
 
 
 
 
 if generate:  
+        if custom_points:
+            if len(node_points)>1:
+                    
+                node_points =  np.array(node_points)*SCALE
+                N = len(node_points)
+            else:
+                st.warning("Atleast 2 Nodes needed for the simulation...\n" \
+                        "Continuing with Random Points"
+                        )
+                custom_points = False
+                node_points = None
+        else:
+
+            node_points = None
+
+        
         with st.spinner("🌀 Calculating optimal router positions..."):
             heur_results, all_heur, all_heur_times, h_points, heuristic_options, inter = generateResult(custom_points,node_points)
             if heur_results is not None:
@@ -600,8 +723,9 @@ try:
                         st.session_state.download_format,
                         st.session_state.heuristic_options
                     )
-                except:
+                except Exception as e:
                     st.warning("⚠️ Error Occured While Generating Intermediates")
+                    st.error(e)
             st.markdown("---")
             st.markdown("## Results")
             plotResults(

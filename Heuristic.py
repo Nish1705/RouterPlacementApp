@@ -23,7 +23,6 @@ If both heuristics[1] and heuristics[2] are True, it will maximize in-range dist
 heuristics[3] : If True, clean the routers to remove redundant ones
 '''
 
-
 class HeuristicRouterPlacement:
 
     def __init__(self, h_points, coords, router_range, max_routers, heuristics,scale=1):
@@ -32,6 +31,23 @@ class HeuristicRouterPlacement:
         self.router_range = router_range
         self.max_routers = max_routers
         self.heuristics = heuristics  
+
+    def initPlotParams(self,title=None, xlabel=None, ylabel=None, color='skyblue', edgecolor='black', alpha=1.0, grid=False):
+        plt.clf()
+        plt.rcParams.update({'font.size': 14})
+        plt.rcParams["font.family"] = "sans-serif" # Set default to serif
+        plt.rcParams["font.sans-serif"] = ["Helvetica", "Arial", "DejaVu Sans"] # Set fallback fonts for sans-serif
+        # plt.figure(figsize=(3,3)) # Width and height in inches
+        plt.axis('equal')
+
+        if xlabel is not None:
+            plt.xlabel(xlabel)
+        if ylabel is not None:
+            plt.ylabel(ylabel)
+        if title is not None:
+            plt.title(title)
+        plt.grid(grid)
+
         
     def initialCheck(self,h_points,coords,router_range):
         for point in h_points:
@@ -296,7 +312,7 @@ class HeuristicRouterPlacement:
         central_points = np.array(central_points)
 
         try:
-            print("Cannot create hull for <= 2 points")
+            # print("Cannot create hull for <= 2 points")
             hull = ConvexHull(central_points)
 
             # Bounding box of the convex hull
@@ -310,6 +326,8 @@ class HeuristicRouterPlacement:
 
             # plt.subplot(rows,cols,subplots)
             plt.figure(figsize=(3.3,2.7))
+            
+            self.initPlotParams()
 
 
             for b in bb:
@@ -328,8 +346,52 @@ class HeuristicRouterPlacement:
 
 
         except Exception as e:
-            print("Exception occured",e)
-            pass 
+            cur_points = central_points.copy()
+            added = np.array([])
+
+            for point in central_points:
+                cur_points = np.vstack((cur_points,point+0.01))
+                cur_points = np.vstack((cur_points,point-0.01))
+                added = np.append(added,point+0.01)
+                added = np.append(added,point-0.01)
+
+
+
+
+            
+            hull = ConvexHull(cur_points)
+
+            # Bounding box of the convex hull
+            min_x = min(cur_points[:,0])
+            min_y = min(cur_points[:,1])
+            max_x = max(cur_points[:,0])
+            max_y = max(cur_points[:,1])
+
+
+            bb = [(min_x,min_y), (min_x, max_y), (max_x, min_y), (max_x, max_y)]
+
+            # plt.subplot(rows,cols,subplots)
+            plt.figure(figsize=(3.3,2.7))
+            
+            self.initPlotParams()
+
+
+            for b in bb:
+                plt.plot(b[0], b[1], 'ro',label="Bounding Box" if b==bb[0] else "")
+
+            plt.plot(h_points[:,0], h_points[:,1], 'o',label='Regular Nodes')
+            for simplex in hull.simplices:
+    
+                plt.plot(cur_points[simplex, 0], cur_points[simplex, 1], 'k-')
+                
+            
+
+            plt.tight_layout()
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            all_buffers.append(buf.getvalue())
+            plt.close()
 
         while k>0:
             reachable_points = {}
@@ -392,6 +454,8 @@ class HeuristicRouterPlacement:
             k-=1
 
             plt.figure(figsize=(3.3,2.7))
+            
+            self.initPlotParams()
             # print("Adding A plot")
 
             plt.plot(central_points[:,0], central_points[:,1], 'bo')
@@ -402,7 +466,7 @@ class HeuristicRouterPlacement:
 
             for best_point in router_location:
                 plt.plot(best_point[0], best_point[1], 'X',color='black')
-                circle = plt.Circle((best_point[0], best_point[1]), router_range , color='green', fill=False, linestyle='dotted')
+                circle = plt.Circle((best_point[0], best_point[1]), router_range , color='green', fill = True, linestyle='dotted',alpha=0.1)
                 plt.gca().add_patch(circle)
 
             plt.tight_layout()
@@ -487,6 +551,7 @@ class HeuristicRouterPlacement:
             k-=1
 
             plt.figure(figsize=(3.3,2.7))
+            self.initPlotParams()
             # print("Adding A plot")
 
             plt.plot(h_points[:,0], h_points[:,1], 'bo')
@@ -497,7 +562,7 @@ class HeuristicRouterPlacement:
 
             for best_point in router_location:
                 plt.plot(best_point[0], best_point[1], 'X',color='black')
-                circle = plt.Circle((best_point[0], best_point[1]), router_range , color='green', fill=False, linestyle='dotted')
+                circle = plt.Circle((best_point[0], best_point[1]), router_range , color='green', fill = True, linestyle='dotted',alpha=0.1)
                 plt.gca().add_patch(circle)
             plt.tight_layout()
 
@@ -515,7 +580,8 @@ class HeuristicRouterPlacement:
 
     def run(self):
 
-        global all_routers,all_buffers
+        global all_routers,all_buffers,FIGSIZE
+
 
         if not self.initialCheck(self.h_points, self.coords, self.router_range):
             print("Not Possible to connect all the Source points(Not Sufficient Discretization).")
