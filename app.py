@@ -141,26 +141,50 @@ def generateResult(custom_points,node_points):
     all_heur_times={}
     heur_results = []
     intermediates = {}
+    res_without_clean = {
+        
+
+    }
+    
 
     for i,heuristic in enumerate(heuristic_options):
 
+        if heuristic[3]==True:
+            withoutClean = [heuristic[0],heuristic[1],heuristic[2],False]
+            routers,time_heur_temp = res_without_clean[getAbreviation(tuple(withoutClean))]
+
+            start_heur = time.time()
+            Heur_model = H(h_points=h_points, coords=coords, router_range=ROUTER_RANGE*SCALE, max_routers=100, heuristics=heuristic)
+            HEUR_RESULT = Heur_model.clean(nodes=h_points,routers=routers,r=ROUTER_RANGE*SCALE)
+            
+            time_heur_temp +=  time.time() - start_heur
+
+            if HEUR_RESULT ==None:
+                return None,None,None,None,None,None
+            else:
+                all_heur[getAbreviation(tuple(heuristic))]=len(HEUR_RESULT)
+                all_heur_times[getAbreviation(tuple(heuristic))]=time_heur_temp*1000
+                intermediates[getAbreviation(tuple(heuristic))] = intermediates[getAbreviation(tuple(withoutClean))]
+                heur_results.append(tuple(HEUR_RESULT))
 
 
-        start_heur = time.time()
-        Heur_model = H(h_points=h_points, coords=coords, router_range=ROUTER_RANGE*SCALE, max_routers=100, heuristics=heuristic)
-        HEUR_RESULT,inter = Heur_model.run()
-        
-        
-        time_heur_temp =  time.time() - start_heur
-
-        if HEUR_RESULT ==None:
-            return None,None,None,None,None,None
         else:
-            all_heur[getAbreviation(tuple(heuristic))]=len(HEUR_RESULT)
-            all_heur_times[getAbreviation(tuple(heuristic))]=time_heur_temp*1000
-            intermediates[getAbreviation(tuple(heuristic))] = [initial_plots[0],initial_plots[1],*inter]
-            heur_results.append(tuple(HEUR_RESULT))
+            start_heur = time.time()
+            Heur_model = H(h_points=h_points, coords=coords, router_range=ROUTER_RANGE*SCALE, max_routers=100, heuristics=heuristic)
+            HEUR_RESULT,inter = Heur_model.run()            
+            time_heur_temp =  time.time() - start_heur
 
+            if HEUR_RESULT ==None:
+                return None,None,None,None,None,None
+            else:
+                all_heur[getAbreviation(tuple(heuristic))]=len(HEUR_RESULT)
+                all_heur_times[getAbreviation(tuple(heuristic))]=time_heur_temp*1000
+                intermediates[getAbreviation(tuple(heuristic))] = [initial_plots[0],initial_plots[1],*inter]
+                heur_results.append(tuple(HEUR_RESULT))
+                res_without_clean[getAbreviation(tuple(heuristic))] =[HEUR_RESULT,time_heur_temp]
+
+
+    print(all_heur_times)
     return heur_results,all_heur,all_heur_times,h_points,heuristic_options,intermediates
                   
 def plotIntermediates(inter,download_format,heuristic_options):
@@ -218,7 +242,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 # plt.gca().add_patch(circle)
 
             xs, ys = zip(*heur_results[i])
-            plt.scatter(xs, ys, color='blue', label='Routers')
+            # plt.scatter(xs, ys, color='blue', label='Routers')
 
             # Draw undirected edges between routers within range r
             for k, (x1, y1) in enumerate(heur_results[i]):
@@ -264,7 +288,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 # plt.gca().add_patch(circle)
             
             xs, ys = zip(*heur_results[i+1])
-            plt.scatter(xs, ys, color='blue', label='Routers')
+            # plt.scatter(xs, ys, color='blue', label='Routers')
 
             # Draw undirected edges between routers within range r
             for k, (x1, y1) in enumerate(heur_results[i+1]):
@@ -307,7 +331,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 # circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
                 # plt.gca().add_patch(circle)
             xs, ys = zip(*heur_results[i+2])
-            plt.scatter(xs, ys, color='blue', label='Routers')
+            # plt.scatter(xs, ys, color='blue', label='Routers')
 
             # Draw undirected edges between routers within range r
             for k, (x1, y1) in enumerate(heur_results[i+2]):
@@ -352,7 +376,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 # plt.gca().add_patch(circle)
             
             xs, ys = zip(*heur_results[i+3])
-            plt.scatter(xs, ys, color='blue', label='Routers')
+            # plt.scatter(xs, ys, color='blue', label='Routers')
 
             # Draw undirected edges between routers within range r
             for k, (x1, y1) in enumerate(heur_results[i+3]):
@@ -448,7 +472,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 try:
                 
                     plt.figure(figsize=(10,6))  
-                    initPlotParams(ylabel = 'Heuristic',xlabel='Time (in milliseconds)')
+                    initPlotParams(ylabel = 'Heuristic',xlabel='Time (in ms)')
                     bars = plt.barh(list(all_heur_times.keys()),all_heur_times.values(),color='navy')
                     for bar in bars:
                         plt.text(bar.get_width()//2,
@@ -675,7 +699,6 @@ with method_container:
         else:
             pass
 
-# result = st.container(border=1)
 
 generate = st.button("Generate Plot",use_container_width=True)
 
@@ -686,7 +709,7 @@ generate = st.button("Generate Plot",use_container_width=True)
 
 
 
-if generate:  
+if generate: 
         if custom_points:
             if len(node_points)>1:
                     
@@ -699,9 +722,7 @@ if generate:
                 custom_points = False
                 node_points = None
         else:
-
-            node_points = None
-
+            node_points = None            
         
         with st.spinner("🌀 Calculating optimal router positions..."):
             heur_results, all_heur, all_heur_times, h_points, heuristic_options, inter = generateResult(custom_points,node_points)
@@ -737,6 +758,14 @@ if generate:
 
 
 try:
+    if not custom_points:
+        with st.container(border=1,height=300):
+            st.markdown("#### Random Points For Simulation: ")
+            df = pd.DataFrame(st.session_state.h_points, columns=["x", "y"])
+            st.table(data=df[["x", "y"]])
+    
+
+
     st.session_state.download_format = download_format
 
     if all(
