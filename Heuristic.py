@@ -30,7 +30,8 @@ class HeuristicRouterPlacement:
         self.coords = coords
         self.router_range = router_range
         self.max_routers = max_routers
-        self.heuristics = heuristics  
+        self.heuristics = heuristics
+        
 
     def initPlotParams(self,title=None, xlabel=None, ylabel=None, color='skyblue', edgecolor='black', alpha=1.0, grid=False):
         plt.clf()

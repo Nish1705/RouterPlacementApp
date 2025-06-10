@@ -11,7 +11,7 @@ import pandas as pd
 from streamlit_drawable_canvas import st_canvas
 import zipfile
 from PIL import Image
-
+import math
 
 FIG_SIZE = (3.3,2.7)
 
@@ -40,7 +40,7 @@ def getAbreviation(key):
     if len(x)==0:
         ans  = "Greedy(G)"
     elif len(x)==1:
-        ans = f"Only G+{x}"
+        ans = f"G+{x}"
     else:
         ans = ''
         for i in x:
@@ -157,7 +157,7 @@ def generateResult(custom_points,node_points):
             return None,None,None,None,None,None
         else:
             all_heur[getAbreviation(tuple(heuristic))]=len(HEUR_RESULT)
-            all_heur_times[getAbreviation(tuple(heuristic))]=time_heur_temp*1000000
+            all_heur_times[getAbreviation(tuple(heuristic))]=time_heur_temp*1000
             intermediates[getAbreviation(tuple(heuristic))] = [initial_plots[0],initial_plots[1],*inter]
             heur_results.append(tuple(HEUR_RESULT))
 
@@ -211,11 +211,22 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             # plt.title(f"{getAbreviation(tuple(heuristic_options[i]))} : {len(heur_results[i])}")
 
-            plt.plot(h_points[:,0], h_points[:,1], 'o')
+            plt.plot(h_points[:,0], h_points[:,1], 'o',zorder=-1)
             for point in heur_results[i]:
                 plt.plot(point[0], point[1], 'X',color='black')
-                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
-                plt.gca().add_patch(circle)
+                # circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
+                # plt.gca().add_patch(circle)
+
+            xs, ys = zip(*heur_results[i])
+            plt.scatter(xs, ys, color='blue', label='Routers')
+
+            # Draw undirected edges between routers within range r
+            for k, (x1, y1) in enumerate(heur_results[i]):
+                for j in range(k + 1, len(heur_results[i])):
+                    x2, y2 = heur_results[i][j]
+                    if math.dist((x1, y1), (x2, y2)) <= router_range*scale:
+                            plt.plot([x1, x2], [y1, y2], color='black', linewidth=0.5)
+
             plt.tight_layout()
 
             buf = io.BytesIO()
@@ -246,11 +257,24 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             # plt.title(f"{getAbreviation(tuple(heuristic_options[i+1]))} : {len(heur_results[i+1])}")
 
-            plt.plot(h_points[:,0], h_points[:,1], 'o')
+            plt.plot(h_points[:,0], h_points[:,1], 'o',zorder=-1)
             for point in heur_results[i+1]:
                 plt.plot(point[0], point[1], 'X',color='black')
-                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
-                plt.gca().add_patch(circle)
+                # circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
+                # plt.gca().add_patch(circle)
+            
+            xs, ys = zip(*heur_results[i+1])
+            plt.scatter(xs, ys, color='blue', label='Routers')
+
+            # Draw undirected edges between routers within range r
+            for k, (x1, y1) in enumerate(heur_results[i+1]):
+                for j in range(k + 1, len(heur_results[i+1])):
+                    x2, y2 = heur_results[i+1][j]
+                    if math.dist((x1, y1), (x2, y2)) <= router_range*scale:
+                            plt.plot([x1, x2], [y1, y2], color='black', linewidth=0.5)
+
+                
+
             plt.tight_layout()
 
             buf = io.BytesIO()
@@ -277,11 +301,22 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             # plt.title(f"{getAbreviation(tuple(heuristic_options[i+2]))} : {len(heur_results[i+2])}")
 
-            plt.plot(h_points[:,0], h_points[:,1], 'o')
+            plt.plot(h_points[:,0], h_points[:,1], 'o',zorder=-1)
             for point in heur_results[i+2]:
                 plt.plot(point[0], point[1], 'X',color='black')
-                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
-                plt.gca().add_patch(circle)
+                # circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
+                # plt.gca().add_patch(circle)
+            xs, ys = zip(*heur_results[i+2])
+            plt.scatter(xs, ys, color='blue', label='Routers')
+
+            # Draw undirected edges between routers within range r
+            for k, (x1, y1) in enumerate(heur_results[i+2]):
+                for j in range(k + 1, len(heur_results[i+2])):
+                    x2, y2 = heur_results[i+2][j]
+                    if math.dist((x1, y1), (x2, y2)) <= router_range*scale:
+                            plt.plot([x1, x2], [y1, y2], color='black', linewidth=0.5)
+
+
             plt.tight_layout()
 
             buf = io.BytesIO()
@@ -310,11 +345,22 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
             initPlotParams(equal=True)
             # plt.title(f"{getAbreviation(tuple(heuristic_options[i+3]))} : {len(heur_results[i+3])}")
 
-            plt.plot(h_points[:,0], h_points[:,1], 'o')
+            plt.plot(h_points[:,0], h_points[:,1], 'o',zorder=-1)
             for point in heur_results[i+3]:
                 plt.plot(point[0], point[1], 'X',color='black')
-                circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
-                plt.gca().add_patch(circle)
+                # circle = plt.Circle((point[0], point[1]), router_range*scale , color='green', fill=True, linestyle='dotted',alpha=0.1)
+                # plt.gca().add_patch(circle)
+            
+            xs, ys = zip(*heur_results[i+3])
+            plt.scatter(xs, ys, color='blue', label='Routers')
+
+            # Draw undirected edges between routers within range r
+            for k, (x1, y1) in enumerate(heur_results[i+3]):
+                for j in range(k + 1, len(heur_results[i+3])):
+                    x2, y2 = heur_results[i+3][j]
+                    if math.dist((x1, y1), (x2, y2)) <= router_range*scale:
+                            plt.plot([x1, x2], [y1, y2], color='black', linewidth=0.5)
+
             plt.tight_layout()
 
             buf = io.BytesIO()
@@ -402,7 +448,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                 try:
                 
                     plt.figure(figsize=(10,6))  
-                    initPlotParams(ylabel = 'Heuristic',xlabel='Time (in microseconds)')
+                    initPlotParams(ylabel = 'Heuristic',xlabel='Time (in milliseconds)')
                     bars = plt.barh(list(all_heur_times.keys()),all_heur_times.values(),color='navy')
                     for bar in bars:
                         plt.text(bar.get_width()//2,
