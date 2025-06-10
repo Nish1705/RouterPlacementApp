@@ -184,12 +184,10 @@ def generateResult(custom_points,node_points):
                 res_without_clean[getAbreviation(tuple(heuristic))] =[HEUR_RESULT,time_heur_temp]
 
 
-    print(all_heur_times)
     return heur_results,all_heur,all_heur_times,h_points,heuristic_options,intermediates
                   
 def plotIntermediates(inter,download_format,heuristic_options):
     save_format = 'png' if download_format == 'PNG' else 'pdf'
-    # print(len(inter))
 
     with st.expander("Show Intermediates"):
         st.markdown('## Intermediates')
@@ -506,7 +504,6 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
         except Exception as e:
             st.warning("Something went wrong with the generation of Analytics Graphs")
             st.error(e)
-            print(e)
         
         
 
