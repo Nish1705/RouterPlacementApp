@@ -25,12 +25,13 @@ heuristics[3] : If True, clean the routers to remove redundant ones
 
 class HeuristicRouterPlacement:
 
-    def __init__(self, h_points, coords, router_range, max_routers, heuristics,scale=1):
+    def __init__(self, h_points, coords, router_range, max_routers, heuristics,scale):
         self.h_points = h_points
         self.coords = coords
-        self.router_range = router_range
+        self.router_range = router_range*scale
         self.max_routers = max_routers
         self.heuristics = heuristics
+        self.scale = scale
         
 
     def initPlotParams(self,title=None, xlabel=None, ylabel=None, color='skyblue', edgecolor='black', alpha=1.0, grid=False):
@@ -40,6 +41,9 @@ class HeuristicRouterPlacement:
         plt.rcParams["font.sans-serif"] = ["Helvetica", "Arial", "DejaVu Sans"] # Set fallback fonts for sans-serif
         # plt.figure(figsize=(3,3)) # Width and height in inches
         plt.axis('equal')
+        plt.xlim(0,1*self.scale)
+        plt.ylim(0,1*self.scale)
+
 
         if xlabel is not None:
             plt.xlabel(xlabel)
@@ -156,7 +160,6 @@ class HeuristicRouterPlacement:
         # Step 1: Filter locations that have at least one prior1 node in range
 
         if self.heuristics[0]==True:
-            # print("Checking For routers in range")
             for loc in possible_loc:
                 if any(math.dist(loc, p1) <= range_value for p1 in prior1):
                     if loc not in all_routers:
@@ -210,7 +213,6 @@ class HeuristicRouterPlacement:
 
         # Step 3: Find the point that 
         if self.heuristics[1] == True and self.heuristics[2]==True:
-            # print("Applying Heuristics max(in-range distance) && min(out-of-range distance)")
             ''' max(in-range distance) && min(out-of-range distance) '''
 
             best_point = None
@@ -285,17 +287,14 @@ class HeuristicRouterPlacement:
             min_total_dist = float('inf')
             
             for pt in component:
-                # print("Point : ", pt)
                 total_dist = sum(math.dist(pt, other) for other in other_points)
                 
                 if total_dist < min_total_dist:
                     min_total_dist = total_dist
                     best_point = pt
 
-            # print("Best point : ", best_point)
-            # print("Component : ",component)
+            
             for pt in component:
-                # print(f"Point {pt} in component {i} has total distance {min_total_dist}")
                 if pt != best_point:
 
                     connected.append(tuple(pt))
@@ -313,7 +312,6 @@ class HeuristicRouterPlacement:
         central_points = np.array(central_points)
 
         try:
-            # print("Cannot create hull for <= 2 points")
             hull = ConvexHull(central_points)
 
             # Bounding box of the convex hull
@@ -334,7 +332,7 @@ class HeuristicRouterPlacement:
             for b in bb:
                 plt.plot(b[0], b[1], 'ro',label="Bounding Box" if b==bb[0] else "")
 
-            plt.plot(h_points[:,0], h_points[:,1], 'o',label='Regular Nodes')
+            plt.plot(h_points[:,0], h_points[:,1], 'o',label='Regular Nodes',zorder=1)
             for simplex in hull.simplices:
                 plt.plot(central_points[simplex, 0], central_points[simplex, 1], 'k-')
 
@@ -374,13 +372,14 @@ class HeuristicRouterPlacement:
             # plt.subplot(rows,cols,subplots)
             plt.figure(figsize=(3.3,2.7))
             
+            
             self.initPlotParams()
 
 
             for b in bb:
                 plt.plot(b[0], b[1], 'ro',label="Bounding Box" if b==bb[0] else "")
 
-            plt.plot(h_points[:,0], h_points[:,1], 'o',label='Regular Nodes')
+            plt.plot(h_points[:,0], h_points[:,1], 'o',label='Regular Nodes',zorder=1)
             for simplex in hull.simplices:
     
                 plt.plot(cur_points[simplex, 0], cur_points[simplex, 1], 'k-')
@@ -456,18 +455,18 @@ class HeuristicRouterPlacement:
 
             plt.figure(figsize=(3.3,2.7))
             
+            
             self.initPlotParams()
-            # print("Adding A plot")
 
             plt.plot(central_points[:,0], central_points[:,1], 'bo')
 
 
             for best_point in best_points:
-                plt.plot(best_point[0], best_point[1], 'x',color='green')
+                plt.plot(best_point[0], best_point[1], 'x',color='green',zorder=-1)
 
             for best_point in router_location:
-                plt.plot(best_point[0], best_point[1], 'X',color='black')
-                circle = plt.Circle((best_point[0], best_point[1]), router_range , color='green', fill = True, linestyle='dotted',alpha=0.1)
+                plt.plot(best_point[0], best_point[1], 'X',color='black',zorder=1)
+                circle = plt.Circle((best_point[0], best_point[1]), router_range , color='green', fill = True, linestyle='dotted',alpha=0.1,zorder=1)
                 plt.gca().add_patch(circle)
 
             plt.tight_layout()
@@ -553,7 +552,6 @@ class HeuristicRouterPlacement:
 
             plt.figure(figsize=(3.3,2.7))
             self.initPlotParams()
-            # print("Adding A plot")
 
             plt.plot(h_points[:,0], h_points[:,1], 'bo')
 
@@ -592,7 +590,7 @@ class HeuristicRouterPlacement:
         router_range = self.router_range
         max_routers = self.max_routers
         left =  self.h_points.copy()
-        H = HeuristicRouterPlacement(self.h_points,self.coords,router_range,max_routers,self.heuristics)
+        H = HeuristicRouterPlacement(self.h_points,self.coords,router_range,max_routers,self.heuristics,self.scale)
         router_location = H.placeRouters(left,self.coords,router_range,max_routers,all_routers)
 
 
@@ -665,8 +663,5 @@ class HeuristicRouterPlacement:
         if self.heuristics[3]:
             all_routers = self.clean(self.h_points,all_routers,router_range)
 
-    
-        
-        # print("MINUMUM NUMBER OF ROUTERS NEEDED: ", len(all_routers))
-        # print(f"Num of intermediates : {len(all_buffers)}")
+   
         return all_routers,all_buffers

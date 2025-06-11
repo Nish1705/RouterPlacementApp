@@ -107,12 +107,11 @@ def generateResult(custom_points,node_points):
         for simplex in hull.simplices:
             plt.plot(h_points[simplex, 0], h_points[simplex, 1], 'k-')
         
-        # for p in coords:
-        #     print(p)
-        #     marker = '.' 
-        #     color = 'g'
-            # plt.scatter(p[0], p[1], marker=marker, color=color,label="Grid Points" if p[0] == coords[0][0] and p[1] == coords[0][1] else "")
-        plt.plot(h_points[:,0], h_points[:,1], 'bo',label='Grid Points',marker='o',color='green')
+        for p in coords:
+            marker = '.' 
+            color = 'g'
+            plt.scatter(p[0], p[1], marker=marker, color=color,s=0.5)
+        # plt.plot(coords[:,0], coords[:,1],label='Grid Points',marker='.',color='green')
         plt.tight_layout()
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
@@ -157,7 +156,7 @@ def generateResult(custom_points,node_points):
             routers,time_heur_temp = res_without_clean[getAbreviation(tuple(withoutClean))]
 
             start_heur = time.time()
-            Heur_model = H(h_points=h_points, coords=coords, router_range=ROUTER_RANGE*SCALE, max_routers=100, heuristics=heuristic)
+            Heur_model = H(h_points=h_points, coords=coords, router_range=ROUTER_RANGE*SCALE, max_routers=100, heuristics=heuristic,scale=SCALE)
             HEUR_RESULT = Heur_model.clean(nodes=h_points,routers=routers,r=ROUTER_RANGE*SCALE)
             
             time_heur_temp +=  time.time() - start_heur
@@ -173,7 +172,7 @@ def generateResult(custom_points,node_points):
 
         else:
             start_heur = time.time()
-            Heur_model = H(h_points=h_points, coords=coords, router_range=ROUTER_RANGE*SCALE, max_routers=100, heuristics=heuristic)
+            Heur_model = H(h_points=h_points, coords=coords, router_range=ROUTER_RANGE, max_routers=100, heuristics=heuristic,scale=SCALE)
             HEUR_RESULT,inter = Heur_model.run()            
             time_heur_temp =  time.time() - start_heur
 
@@ -436,13 +435,20 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
 
             with col1:
                 try:
+                    option = st.selectbox("Units",('Competitive Ratio','Absolute Value'))
+
                     plt.figure(figsize=(10,6))             
-                    initPlotParams(ylabel = 'Heuristic',xlabel='Competitive Ratio')
-                    bars = plt.barh(list(all_heur.keys()),np.array(list(all_heur.values()))/min(all_heur.values()),color='crimson')
+                    initPlotParams(ylabel = 'Heuristic',xlabel=option)
+                    if option=='Competitive Ratio':
+
+                        bars = plt.barh(list(all_heur.keys()),np.array(list(all_heur.values()))/min(all_heur.values()),color='crimson')
+                    else:
+                        bars = plt.barh(list(all_heur.keys()),list(all_heur.values()),color='crimson')
+
                     for bar in bars:
                         plt.text(bar.get_width()+0.01,
                                   bar.get_y()+bar.get_height()/2,
-                                  "{}".format(bar.get_width()),
+                                  "{}".format(bar.get_width().round(2)),
                                   va='center',
                                   ha='left'
                                   )
@@ -453,6 +459,7 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                     plt.savefig(buf, format='png', bbox_inches='tight')
                     buf.seek(0)
                     plt.close()
+
 
 
 
@@ -471,12 +478,24 @@ def plotResults(heur_results,all_heur,all_heur_times,h_points,heuristic_options,
                     st.error(f"Error : {e}")
             with col2:
                 try:
+                    unit = st.selectbox("Units",('ms','µs','s'))
+
                 
                     plt.figure(figsize=(10,6))  
-                    initPlotParams(ylabel = 'Heuristic',xlabel='Time (in ms)')
-                    bars = plt.barh(list(all_heur_times.keys()),all_heur_times.values(),color='navy')
+
+                    initPlotParams(ylabel = 'Heuristic',xlabel=f'Time (in {unit})')
+                    if unit=='µs':
+                        bars = plt.barh(list(all_heur_times.keys()),np.array(list(all_heur_times.values()))*1000,color='navy')
+                    elif unit == 'ms':
+                        bars = plt.barh(list(all_heur_times.keys()),all_heur_times.values(),color='navy')
+                    else:
+                        bars = plt.barh(list(all_heur_times.keys()),np.array(list(all_heur_times.values()))/1000,color='navy')
+
+
+
+                    
                     for bar in bars:
-                        plt.text(bar.get_width()//2,
+                        plt.text(bar.get_width()/2,
                                   bar.get_y()+bar.get_height()/2,
                                   "{}".format(bar.get_width().round(2)),
                                   va='center',
@@ -595,7 +614,7 @@ col1,col2,col3,col4,col5 = st.columns(5)
 with col1:
     range_perc = st.selectbox(
         "Choose a router range",
-        (10, 20, 30, 40, 50),accept_new_options=False,
+        (10, 15, 20, 25, 30, 35, 40, 45, 50),accept_new_options=False,
         help="Calculated as x\% of SCALE (in meters)"
     )
     ROUTER_RANGE = range_perc/100
@@ -722,7 +741,8 @@ if generate:
                 custom_points = False
                 node_points = None
         else:
-            node_points = None            
+            node_points = None 
+             
         
         with st.spinner("🌀 Calculating optimal router positions..."):
             heur_results, all_heur, all_heur_times, h_points, heuristic_options, inter = generateResult(custom_points,node_points)
@@ -754,15 +774,18 @@ if generate:
                 except:
                     pass
                 st.warning("⚠️ No Valid Result")
+                
+            
 
 
 
 try:
-    if not custom_points:
-        with st.container(border=1,height=300):
-            st.markdown("#### Random Points For Simulation: ")
-            df = pd.DataFrame(st.session_state.h_points, columns=["x", "y"])
-            st.table(data=df[["x", "y"]])
+    if "h_points" in st.session_state:
+        if not custom_points:
+            with st.container(border=1,height=300):
+                st.markdown("#### Random Points For Simulation: ")
+                df = pd.DataFrame(st.session_state.h_points, columns=["x", "y"])
+                st.table(data=df[["x", "y"]])
     
 
 
