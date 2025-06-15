@@ -1,9 +1,7 @@
 '''
 
-Added logic to connect Routers more efficiently
-DONE
+Made the computation much faster using a KDTree approach in all distance calculations
 
-Limitations: Corner cases are not always satisfied due to limitation in discretization (computationally intensive)
 '''
 
 from scipy.spatial import KDTree
@@ -21,6 +19,7 @@ heuristics[1] : If True, maximize in-range distance ONLY
 heuristics[2] : If True, minimize out-of-range distance ONLY
 If both heuristics[1] and heuristics[2] are True, it will maximize in-range distance and minimize out-of-range distance
 heuristics[3] : If True, clean the routers to remove redundant ones
+
 '''
 
 class HeuristicRouterPlacement:
@@ -394,18 +393,15 @@ class HeuristicRouterPlacement:
             plt.close()
 
         while k>0:
+            tree = KDTree(not_connected)
+
             reachable_points = {}
+
             for point in coords:
+                indices = tree.query_ball_point(point, r=router_range)
 
-                for n in not_connected:
-
-                    if math.dist(point, n) <= router_range :
-                        
-                        if tuple(point) not in reachable_points:    
-                            reachable_points[tuple(point)] = 1
-
-                        else:
-                            reachable_points[tuple(point)]+=1
+                if indices: 
+                    reachable_points[tuple(point)] = len(indices)
 
             if len(reachable_points.values()) == 0:
                 if len(not_connected) == 0:
@@ -447,6 +443,7 @@ class HeuristicRouterPlacement:
                         if n in not_connected:
                             not_connected = np.delete(not_connected, np.where(np.all(not_connected == n, axis=1)), axis=0)
                             connected.append(tuple(n))
+                            
             all_routers.append(tuple(choice))
 
 
@@ -493,18 +490,16 @@ class HeuristicRouterPlacement:
         router_location = []
 
         while k>0:
+
+            tree = KDTree(not_connected)
+
             reachable_points = {}
+
             for point in coords:
+                indices = tree.query_ball_point(point, r=router_range)
 
-                for n in not_connected:
-
-                    if math.dist(point, n) <= router_range:
-                        
-                        if tuple(point) not in reachable_points:    
-                            reachable_points[tuple(point)] = 1
-
-                        else:
-                            reachable_points[tuple(point)]+=1
+                if indices: 
+                    reachable_points[tuple(point)] = len(indices)
                 
 
 
